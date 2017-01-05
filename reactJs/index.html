@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>react start</title>
+        <script src="https://unpkg.com/react@latest/dist/react.js"></script>
+        <script src="https://unpkg.com/react-dom@latest/dist/react-dom.js"></script>
+        <script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <!-- <link rel="stylesheet" href="./css/master.css" media="screen"> -->
+        <link rel="stylesheet" href="/css/master.css" media="screen" title="no title">
+      </head>
+      <body>
+        <div class="container">
+            <div id="tophead"></div>
+            <div id="toptheame"></div>
+        </div>
+        <script type="text/babel">//imp as this is not js it is jsx
+            //creat an component
+            // component must have only one parent so wrap it in div)))
+            var Games = React.createClass({
+                getInitialState:function(){
+                    return{ editing:false }
+                },
+                edit: function(){
+                    this.setState({editing:true})
+                },
+                save:function(){
+                    //refefance to this text can be done by ref and we must refs to get it
+                    var captionchanged = this.refs.textChange.value;
+                    console.log("changed value is "+captionchanged);
+                    this.setState({editing:false})
+                    this.props.upd(captionchanged,this.props.index)
+
+                },
+                remove:function(){
+                    this.props.rmv(this.props.index)
+                },
+                render: function(){
+                    if(!this.state.editing)
+                    {
+                        return (
+
+                            <div className = "thumbnail row " >
+                                <h3 className="col-md-12">{this.props.name}</h3>
+                                <img className="col-md-12 postimage " src={this.props.image}/>
+
+                                <div className="col-md-12 postcommant">{this.props.caption}</div>
+                                <div className="col-md-3 col-sm-3 col-lg-2 col-xs-4">
+                                    <button className="btn btn-default glyphicon glyphicon-pencil" onClick={this.edit}> Edit</button>
+                                </div>
+                                <div className="col-md-3 col-sm-3 col-lg-2 col-xs-4">
+                                    <button className="btn btn-default glyphicon glyphicon-trash" onClick={this.remove}> Remove</button>
+                                </div>
+                            </div>
+                        )
+                    }
+                    else {
+                        return(
+                            <div className = "thumbnail row">
+                                <h3 className="col-md-12">{this.props.name}</h3>
+                                <img className="col-lg-12 postimage " src={this.props.image}/>
+                                <textarea className="col-md-12 postchange form-control "ref="textChange" defaultValue={this.props.caption}></textarea>
+                                <button className=" btn btn-default glyphicon glyphicon-ok" onClick={this.save}> Save</button>
+                            </div>
+                        )
+                    }
+                },
+            });
+            var x;
+            var GameData=[];
+            var f = new FileReader;
+            var GameManager = React.createClass({
+                getInitialState:function(){
+                    var a=JSON.parse(localStorage.GameData)
+                    return{
+                        gamedata: a
+
+                    };
+                },
+                componentDidMount: function () {
+                    $(this.refs.mymodal).on('shown.bs.modal', function () {
+                        history.pushState({'to': 'show'}, "Add new image", '/add');
+                    }).on('hidden.bs.modal', function () {
+                        history.pushState({'to': 'hide'}, "react start", '/');
+                    });
+                    $(window).on('popstate', function (e) {
+                        if (history.state.to == 'show') {
+                            $(this.refs.mymodal).modal('show');
+                        } else {
+                            $(this.refs.mymodal).modal('hide');
+                        }
+                    }.bind(this));
+                },
+                eachGame:function(text,i){
+
+                    return <Games key={i} index={i} name={this.state.gamedata[i].name} caption={this.state.gamedata[i].commant}
+                    image={this.state.gamedata[i].image} upd={this.updateGame} rmv={this.removeGame}/>;
+                },
+                removeGame:function(i){
+                    var arr = this.state.gamedata;
+                    arr.splice(i,1);
+                    localStorage.setItem( 'GameData', JSON.stringify(arr));
+                    this.setState({gamedata:arr});
+                },
+                updateGame:function(writentext,i){
+                    var arr = this.state.gamedata;
+                    arr[i].commant = writentext;
+                    localStorage.setItem( 'GameData', JSON.stringify(arr));
+                    this.setState({gamedata:arr});
+                },
+                submitGame:function(){
+                    x = this.refs.gameImage.files[0];
+                    console.log(x);
+                    f.readAsDataURL(x);
+                    f.addEventListener('load', () => {
+                        var arr = this.state.gamedata;
+                        arr.push({
+                            "name":this.refs.gameName.value,
+                            "commant":this.refs.gameCommant.value,
+                            "image":f.result,
+                            //URL.createObjectURL(this.refs.gameImage.files[0]),
+                        });
+                        console.log("arr is = "+JSON.stringify(arr));
+                        localStorage.setItem( 'GameData', JSON.stringify(arr));
+                        this.setState({gamedata:arr});
+                    });
+                },
+                //alwase put comma after complet of function ,,,,,,,,,,,,,,,,,,,,,
+                render:function(){
+                    return(
+                        <div>
+                            <button className="center glyphicon glyphicon-plus btn btn-default center-block addpost" data-toggle="modal"
+                            data-target="#myModal" > ADD POST</button>
+                            <div className="row">
+                                <div className="col-md-6 col-sm-8 col-lg-6 col-xs-10 col-md-offset-3 col-sm-offset-2 col-lg-offset-3 col-xs-offset-1">{this.state.gamedata.map(this.eachGame)}</div>
+                            </div>
+
+                            <div className="modal fade" id="myModal" ref="mymodal" role="dialog">
+                                   <div className="modal-dialog">
+                                    <div className="modal-content">
+                                        <div className="modal-header">
+                                                <button type="button" className="close" data-dismiss="modal">&times;</button>
+                                                <h4 className="modal-title">Post it out</h4>
+                                        </div>
+                                        <div className="modal-body">
+                                            <form>
+                                                <div className="form-group">
+                                                    <lable className="form-control-label">Name:</lable>
+                                                    <input type="text" className="form-control" ref="gameName"/>
+                                                    <br/>
+                                                </div>
+                                                <div className="form-group">
+                                                    <lable className="form-control-label" >Comment:</lable>
+                                                    <textarea className="form-control"  ref="gameCommant"></textarea>
+                                                    <br/>
+                                                </div>
+                                                <div >
+                                                    <input type="file" ref="gameImage" accept="image/*" />
+
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <div className="modal-footer">
+                                            <button onClick={this.submitGame} className="btn btn-default " data-dismiss="modal">SUBMIT</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    )
+                }
+
+            });
+            // even rendering at reactDOM we should have single parent
+            //state are the one that change .
+            ReactDOM.render(<GameManager/>,document.getElementById('toptheame'));
+        </script>
+      </body>
+</html>
